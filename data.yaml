@@ -1,0 +1,6 @@
+train: E:/D/door and window detection/Images/train
+val: E:/D/door and window detection/Images/val
+
+names:
+  0: door
+  1: window

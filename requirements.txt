@@ -1,0 +1,6 @@
+labelImg
+ultralytics==8.1.26
+flask
+opencv-python
+numpy
+Pillow
