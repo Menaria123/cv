@@ -1,18 +1,18 @@
 import torch
+import ultralytics.nn.modules
 import ultralytics.nn.tasks
-
-# Allowlist the DetectionModel class to bypass the restricted loading error
-torch.serialization.add_safe_globals([ultralytics.nn.tasks.DetectionModel])
-
 from ultralytics import YOLO
 
+
+# Load base model (YOLOv8n pretrained weights)
 model = YOLO('yolov8n.pt')
 
+# Train on your custom door-window dataset
 model.train(
-    data='data.yaml',
-    epochs=50,
+    data=r"E:\D\new\data.yaml",  
+    epochs=100,
     imgsz=640,
     batch=16,
     name='door_window_yolov8',
-    device='0'
+    device='cpu'  
 )

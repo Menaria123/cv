@@ -3,16 +3,22 @@ from ultralytics import YOLO
 from PIL import Image
 import io
 import os
+import torch
+import ultralytics.nn.modules
+import ultralytics.nn.tasks
 
 app = Flask(__name__)
 
-# ✅ Load your trained model (adjust this path if needed)
-MODEL_PATH = r"E:\D\door and window detection\runs\detect\door_window_yolov8\weights\best.pt"
+
+MODEL_PATH = r"E:\D\door and window detection\runs\detect\door_window_yolov813\weights\best.pt"
 
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
 
 model = YOLO(MODEL_PATH)
+
+
+print("Loaded model with classes:", model.names)
 
 @app.route('/detect', methods=['POST'])
 def detect():
@@ -25,8 +31,7 @@ def detect():
     except Exception as e:
         return jsonify({"error": f"Invalid image file: {str(e)}"}), 400
 
-    # Predict with model
-    results = model.predict(image, conf=0.25, imgsz=640)
+    results = model.predict(image, conf=0.05, imgsz=640)
 
     detections = []
     for result in results:

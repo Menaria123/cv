@@ -1,6 +1,5 @@
-train: E:/D/door and window detection/Images/train
-val: E:/D/door and window detection/Images/val
+train: images/train
+val: images/val
 
-names:
-  0: door
-  1: window
+nc: 2
+names: ['door', 'window']
