@@ -1,7 +1,7 @@
 # Core ML libraries
 torch==2.3.1+cpu
 numpy==1.26.4
-
+--upgrade pip
 # Ultralytics YOLOv8 (latest compatible)
 ultralytics==8.3.150
 
