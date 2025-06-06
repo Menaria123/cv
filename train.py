@@ -1,18 +1,11 @@
 import os
 
-# Get absolute path to Images folder
-cwd = os.getcwd()
-images_path = os.path.join(cwd, "Images")
+base = os.getcwd()  # /opt/render/project/src
+train_dir = os.path.join(base, "Images", "train")
+val_dir   = os.path.join(base, "Images", "val")
 
-# Write full paths to data.yaml
-yaml_content = f"""
-train: {images_path}/train
-val: {images_path}/val
-nc: 2
-names: ['door', 'window']
-"""
-
-with open("data.yaml", "w") as f:
-    f.write(yaml_content.strip())
-
-print("data.yaml file created with full image paths.")
+print("Checking dataset folders:")
+print(f"  Images/train exists? {os.path.isdir(train_dir)}")
+print(f"    Contents: {os.listdir(train_dir) if os.path.isdir(train_dir) else 'N/A'}")
+print(f"  Images/val   exists? {os.path.isdir(val_dir)}")
+print(f"    Contents: {os.listdir(val_dir) if os.path.isdir(val_dir) else 'N/A'}")
