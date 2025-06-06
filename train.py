@@ -8,4 +8,4 @@ names: ['door', 'window']
 with open('data.yaml', 'w') as f:
     f.write(yaml_content.strip())
 
-print("data.yaml updated!")
+print("data.yaml file has been created/updated successfully.")
