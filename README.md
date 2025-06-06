@@ -32,30 +32,7 @@ This project demonstrates how to train a custom YOLOv8 model to detect doors and
 ---
 
 ## Directory Structure
-├── images/
-│   ├── train/
-│   └── val/
-│   ├── train.cache
-│   └── val.cache
-│
-├── labels/
-│   ├── train/
-│   └── val/
-│   ├── train.cache
-│   └── val.cache
-│
-├── data.yaml
-├── requirements.txt
-│
-├── app.py
-├── train.py
-├── yolov8n.pt
-├── runs/
-│   └── detect/
-│       └── door_window_yolov8_xxx/
-│           └── weights/
-│               └── best.pt
-├── README.md  
+![image](https://github.com/user-attachments/assets/dfab8d4f-7038-4b33-8b43-f538c16773af)
 
 
 - **images/train, images/val**: Training and validation images.  
