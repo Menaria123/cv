@@ -1,5 +1,6 @@
 # Upgrade pip (will upgrade if not latest)
 pip>=24.0
+flask
 
 # Torch CPU version (requires custom index URL)
 torch==2.3.1+cpu
