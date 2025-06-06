@@ -10,81 +10,69 @@ from PIL import Image
 import io
 
 # ─────────────────────────────────────────────────────────────
-# CONFIGURATION
+#                 CONFIGURATION
 # ─────────────────────────────────────────────────────────────
 
-BASE_DIR       = os.getcwd()                         # e.g. /opt/render/project/src
-IMAGES_DIR     = os.path.join(BASE_DIR, "Images")     #   /opt/render/project/src/Images
-TRAIN_DIR      = os.path.join(IMAGES_DIR, "train")    #   /opt/render/project/src/Images/train
-VAL_DIR        = os.path.join(IMAGES_DIR, "val")      #   /opt/render/project/src/Images/val
+BASE_DIR       = os.getcwd()                              # e.g. /opt/render/project/src
+IMAGES_DIR     = os.path.join(BASE_DIR, "Images")         # /opt/render/project/src/Images
+TRAIN_DIR      = os.path.join(IMAGES_DIR, "train")        # /opt/render/project/src/Images/train
+VAL_DIR        = os.path.join(IMAGES_DIR, "val")          # /opt/render/project/src/Images/val
 DATA_YAML_PATH = os.path.join(BASE_DIR, "data.yaml")
 WEIGHTS_DIR    = os.path.join(BASE_DIR, "runs/detect/door_window_yolov8/weights")
 BEST_WEIGHTS   = os.path.join(WEIGHTS_DIR, "best.pt")
-YOLO_BASE      = "yolov8n.pt"  # pretrained yolov8n
+YOLO_BASE      = "yolov8n.pt"   # pretrained backbone to download
 
-# If you have fewer/no labels yet, YOLO will treat unlabeled images as “no objects.”
-# But ideally, each image X.png → X.txt in the same folder for YOLO format.
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
-LABEL_EXTS = {".txt"}  # assume YOLO‐format annotations
+# Supported image & label extensions (YOLO expects .txt alongside each image)
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
+LABEL_EXTS = {".txt"}           # YOLO‐format labels
 
-TRAIN_RATIO = 0.8  # 80% train, 20% val if splitting
+TRAIN_RATIO = 0.8  # 80% train / 20% val split if done from Images/
 
 # ─────────────────────────────────────────────────────────────
-# DATA PREPARATION & TRAINING (in a background thread)
+#          DATA PREPARATION & TRAINING (background thread)
 # ─────────────────────────────────────────────────────────────
 
 def prepare_and_train():
     """
-    1. Ensure Images/train & Images/val exist.
-    2. If train/val are empty but Images/ holds PNG/JPG files, split & move them.
-    3. Write data.yaml.
-    4. Call YOLOv8 .train(...) to produce best.pt.
+    1) Ensure Images/train & Images/val folders exist.
+    2) If both are empty but Images/ has images, split & move them.
+    3) Write a minimal data.yaml that points to these two folders.
+    4) Call YOLOv8.train(...) to produce best.pt (if best.pt does not already exist).
     """
-    # 1) Ensure folders
     os.makedirs(TRAIN_DIR, exist_ok=True)
-    os.makedirs(VAL_DIR, exist_ok=True)
+    os.makedirs(VAL_DIR,   exist_ok=True)
     os.makedirs(WEIGHTS_DIR, exist_ok=True)
 
-    # 2) Check if TRAIN_DIR is empty but Images/ has images
-    existing_train = os.listdir(TRAIN_DIR)
-    existing_val   = os.listdir(VAL_DIR)
-
-    # Only do splitting if train/val are both empty
-    if not existing_train and not existing_val:
-        # Gather all image files directly under Images/
+    # If both train/ and val/ are empty, but Images/ has images, do the 80/20 split
+    if not os.listdir(TRAIN_DIR) and not os.listdir(VAL_DIR):
+        # 1a) Gather all image files directly under Images/
         all_images = []
-        for fname in os.listdir(IMAGES_DIR):
+        for fname in sorted(os.listdir(IMAGES_DIR)):
             fpath = os.path.join(IMAGES_DIR, fname)
-            if os.path.isfile(fpath):
-                ext = os.path.splitext(fname)[1].lower()
-                if ext in IMAGE_EXTS:
-                    all_images.append(fname)
+            if os.path.isfile(fpath) and os.path.splitext(fname)[1].lower() in IMAGE_EXTS:
+                all_images.append(fname)
 
-        if not all_images:
-            print("❗ No image files found under Images/. Skipping split.")
-        else:
-            # Pair each image with a label if it exists
+        if all_images:
+            # 1b) Pair each image with its same‐basename .txt (if exists)
             pairs = []
             for img_fname in all_images:
                 basename, _ = os.path.splitext(img_fname)
                 label_fname = None
-                for lext in LABEL_EXTS:
-                    candidate = f"{basename}{lext}"
+                for ext in LABEL_EXTS:
+                    candidate = f"{basename}{ext}"
                     if os.path.isfile(os.path.join(IMAGES_DIR, candidate)):
                         label_fname = candidate
                         break
                 pairs.append((img_fname, label_fname))
 
-            print(f"Found {len(pairs)} images total (with {sum(1 for _,lbl in pairs if lbl)} labels).")
-
-            # Shuffle & split
+            print(f"[dataset] Found {len(pairs)} image(s) under Images/ (with {sum(1 for _,lbl in pairs if lbl)} labels).")
             random.shuffle(pairs)
             n_train = int(len(pairs) * TRAIN_RATIO)
             train_pairs = pairs[:n_train]
             val_pairs   = pairs[n_train:]
 
-            print(f"→ {len(train_pairs)} pairs → TRAIN/")
-            print(f"→ {len(val_pairs)} pairs → VAL/")
+            print(f"[dataset] → {len(train_pairs)} pairs → TRAIN/")
+            print(f"[dataset] → {len(val_pairs)} pairs → VAL/")
 
             def move_pair(dst_dir, img_fname, lbl_fname):
                 src_img = os.path.join(IMAGES_DIR, img_fname)
@@ -95,38 +83,39 @@ def prepare_and_train():
                     dst_lbl = os.path.join(dst_dir, lbl_fname)
                     shutil.move(src_lbl, dst_lbl)
                 else:
-                    print(f"⚠️  No label found for image {img_fname}; moved image alone.")
+                    print(f"[dataset] ⚠️  No label for {img_fname}; moved image only.")
 
             for img_fname, lbl_fname in train_pairs:
                 move_pair(TRAIN_DIR, img_fname, lbl_fname)
             for img_fname, lbl_fname in val_pairs:
                 move_pair(VAL_DIR, img_fname, lbl_fname)
 
-            print("✅ Dataset split complete.")
+            print("[dataset] ✅ “train/val” split done.")
+        else:
+            print("[dataset] ℹ️  No images found under Images/. Skipping split.")
     else:
-        print("ℹ️  Images/train or Images/val already contains files; skipping dataset split.")
+        print("[dataset] ℹ️  train/val folders not empty; skipping dataset split.")
 
-    # 3) Write data.yaml
-    yaml_content = f"""
-    train: {TRAIN_DIR}
-    val:   {VAL_DIR}
+    # 2) Write data.yaml
+    yaml_txt = f"""
+train: {TRAIN_DIR}
+val:   {VAL_DIR}
 
-    nc: 2
-    names: ['door', 'window']
-    """.strip()
+nc: 2
+names: ['door', 'window']
+""".strip()
 
     with open(DATA_YAML_PATH, "w") as f:
-        f.write(yaml_content)
-    print(f"✅ Wrote data.yaml to {DATA_YAML_PATH}:\n{yaml_content}")
+        f.write(yaml_txt)
+    print(f"[dataset] ✅ Wrote data.yaml:\n{yaml_txt}\n")
 
-    # 4) Kick off YOLOv8 training (if best.pt doesn’t already exist)
+    # 3) If best.pt already exists, skip training
     if os.path.exists(BEST_WEIGHTS):
-        print(f"📦 Found existing weights at {BEST_WEIGHTS}, skipping training.")
+        print(f"[train] 📦 Found existing {BEST_WEIGHTS}; skipping training.")
         return
 
-    print("🛠️  Starting YOLOv8 training in background… (this may take a while)")
-
-    # Load pretrained YOLOv8n and train on our data.yaml
+    # 4) Launch YOLOv8 training (this can take minutes/hours)
+    print("[train] 🛠️  Starting YOLOv8 training (background thread)...")
     model = YOLO(YOLO_BASE)
     model.train(
         data=DATA_YAML_PATH,
@@ -136,43 +125,49 @@ def prepare_and_train():
         name="door_window_yolov8",
         device="cpu"
     )
-    print("✅ Training complete. best.pt should now exist.")
+    print("[train] ✅ Training finished. best.pt should now exist.")
 
-# Launch the above in a daemon thread so Flask can start immediately
+
+# Start the training in a daemon thread
 train_thread = threading.Thread(target=prepare_and_train, daemon=True)
 train_thread.start()
 
 # ─────────────────────────────────────────────────────────────
-# FLASK APP FOR INFERENCE
+#                  FLASK APP FOR INFERENCE
 # ─────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
-_model = None  # will hold our loaded YOLO model
+_model = None  # Will hold the loaded YOLO model once best.pt exists
 
 def try_load_model():
     """
-    If best.pt exists, load it into a global variable.
-    If it’s already loaded, do nothing.
+    If best.pt exists and we haven’t loaded it yet, load it into _model.
     """
     global _model
-    if _model is None and os.path.exists(BEST_WEIGHTS):
-        print(f"📦 Loading trained model from {BEST_WEIGHTS}")
+    if _model is None and os.path.isfile(BEST_WEIGHTS):
+        print(f"[inference] 📦 Loading model from {BEST_WEIGHTS}")
         _model = YOLO(BEST_WEIGHTS)
-        print("📦 Model loaded. Classes:", _model.names)
+        print(f"[inference] 📦 Model loaded; classes = {_model.names}")
 
-# Every 10 seconds, check if best.pt appeared, and load it
 def model_loader_loop():
+    """
+    Every 10 seconds, check for BEST_WEIGHTS and load if present.
+    """
     while True:
         try_load_model()
         time.sleep(10)
 
-# Start a background thread to watch for the trained weights
+# Start the model‐loader thread
 loader_thread = threading.Thread(target=model_loader_loop, daemon=True)
 loader_thread.start()
 
+
 @app.route("/detect", methods=["POST"])
 def detect():
-    # If model isn’t loaded yet, return a "try again later" JSON
+    """
+    1. If _model is not yet loaded (best.pt missing), return 503 (retry later).
+    2. Otherwise, run model.predict() on the uploaded image and return detections JSON.
+    """
     if _model is None:
         return jsonify({"error": "Model not yet trained/loaded. Please retry in a minute."}), 503
 
@@ -185,7 +180,6 @@ def detect():
     except Exception as e:
         return jsonify({"error": f"Invalid image file: {str(e)}"}), 400
 
-    # Run prediction
     results = _model.predict(img, conf=0.05, imgsz=640)
     detections = []
     for r in results:
@@ -203,12 +197,13 @@ def detect():
 
     return jsonify({"detections": detections})
 
+
 # ─────────────────────────────────────────────────────────────
-# STARTUP
+#                        STARTUP
 # ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    # Ensure Flask listens on 0.0.0.0 and uses Render’s $PORT
-    port = int(os.environ.get("PORT", 4000))
-    print(f"🚀 Starting Flask on 0.0.0.0:{port}")
+    # Bind to 0.0.0.0 and use Render’s $PORT (or default 5000 locally)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"[server] 🚀 Starting Flask on 0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
