@@ -59,12 +59,12 @@ This project demonstrates how to train a custom YOLOv8 model to detect doors and
    source venv/bin/activate      # macOS/Linux
    venv\Scripts\activate         # Windows
    
-3.**Install Dependencies**
-    ```bash
-    pip install --upgrade pip
-    pip install -r requirements.txt
+3. **Install Dependencies**
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
 
-4.**How to run**
+4. **How to run**
    ```bash 
     python train.py
     python app.py
