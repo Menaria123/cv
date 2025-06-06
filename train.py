@@ -4,14 +4,11 @@ import ultralytics.nn.tasks
 from ultralytics import YOLO
 import os 
 
-base_dir = os.path.dirname(__file__)
-yaml_file = os.path.join(base_dir, '/data.yaml')
-
 model = YOLO('yolov8n.pt')
 
 # Train on your custom door-window dataset
 model.train(
-    data=yaml_file,  
+    data='src/data.yaml',  
     epochs=100,
     imgsz=640,
     batch=16,
