@@ -209,6 +209,6 @@ def detect():
 
 if __name__ == "__main__":
     # Ensure Flask listens on 0.0.0.0 and uses Render’s $PORT
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 4000))
     print(f"🚀 Starting Flask on 0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
