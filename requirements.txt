@@ -1,11 +1,15 @@
-# Upgrade pip first (this must be done manually before installing requirements)
-# Run separately: python -m pip install --upgrade pip
+# Upgrade pip (will upgrade if not latest)
+pip>=24.0
 
-# Core ML libraries
-torch==2.3.1+cpu      # CPU-only version of PyTorch (Make sure you use correct index URL when installing)
+# Torch CPU version (requires custom index URL)
+torch==2.3.1+cpu
+# PyTorch CPU wheel source
+-f https://download.pytorch.org/whl/cpu/torch_stable.html
+
+# Core numerical computing
 numpy==1.26.4
 
-# YOLOv8 by Ultralytics
+# Ultralytics YOLOv8 (compatible version)
 ultralytics==8.3.150
 
 # Image and data processing
@@ -15,6 +19,6 @@ matplotlib>=3.7.0
 tqdm>=4.65.0
 pyyaml>=6.0
 
-# Optional but helpful for performance
+# Optional but useful
 scipy>=1.10.0
 requests>=2.31.0
