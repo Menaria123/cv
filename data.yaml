@@ -1,5 +1,0 @@
-train: /opt/render/project/src/data/images/train
-val: /opt/render/project/src/data/images/val
-
-nc: 2
-names: ['door', 'window']
