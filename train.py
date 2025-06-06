@@ -9,7 +9,7 @@ model = YOLO('yolov8n.pt')
 
 # Train on your custom door-window dataset
 model.train(
-    data="/opt/render/project/src/data/data.yaml",  
+    data="data.yaml",  
     epochs=100,
     imgsz=640,
     batch=16,
