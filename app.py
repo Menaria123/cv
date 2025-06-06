@@ -10,7 +10,7 @@ import ultralytics.nn.tasks
 app = Flask(__name__)
 
 
-MODEL_PATH = r"E:\D\door and window detection\runs\detect\door_window_yolov813\weights\best.pt"
+MODEL_PATH = r".\door and window detection\runs\detect\door_window_yolov813\weights\best.pt"
 
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
