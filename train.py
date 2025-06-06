@@ -1,6 +1,11 @@
-import os
+yaml_content = """
+train: Images/train
+val: Images/val
+nc: 2
+names: ['door', 'window']
+"""
 
-print("PWD:", os.getcwd())
-print("Files in current dir:", os.listdir('.'))
-print("Files in images/val:", os.listdir('./images/val') if os.path.exists('./images/val') else "No val folder")
-print("Files in images/train:", os.listdir('./images/train') if os.path.exists('./images/train') else "No train folder")
+with open('data.yaml', 'w') as f:
+    f.write(yaml_content.strip())
+
+print("data.yaml updated!")
