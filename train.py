@@ -1,11 +1,18 @@
 import os
 
-base = os.getcwd()  # /opt/render/project/src
-train_dir = os.path.join(base, "Images", "train")
-val_dir   = os.path.join(base, "Images", "val")
+def print_directory_tree(root_dir, indent=''):
+    try:
+        for item in sorted(os.listdir(root_dir)):
+            path = os.path.join(root_dir, item)
+            if os.path.isdir(path):
+                print(f"{indent}📁 {item}/")
+                print_directory_tree(path, indent + '    ')
+            else:
+                print(f"{indent}📄 {item}")
+    except FileNotFoundError:
+        print(f"{indent}[Error] Directory not found: {root_dir}")
 
-print("Checking dataset folders:")
-print(f"  Images/train exists? {os.path.isdir(train_dir)}")
-print(f"    Contents: {os.listdir(train_dir) if os.path.isdir(train_dir) else 'N/A'}")
-print(f"  Images/val   exists? {os.path.isdir(val_dir)}")
-print(f"    Contents: {os.listdir(val_dir) if os.path.isdir(val_dir) else 'N/A'}")
+# Change this to your base directory
+base_directory = '.'  # current directory, or e.g., 'Images'
+print(f"Directory structure of: {os.path.abspath(base_directory)}\n")
+print_directory_tree(base_directory)
