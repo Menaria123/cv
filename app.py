@@ -5,22 +5,21 @@ import io
 import os
 
 # === CONFIGURATION ===
-BASE_DIR       = os.getcwd()                         # /opt/render/project/src
-IMAGES_DIR     = os.path.join(BASE_DIR, "Images")     # /opt/render/project/src/Images
-TRAIN_DIR      = os.path.join(IMAGES_DIR, "train")    # /opt/render/project/src/Images/train
-VAL_DIR        = os.path.join(IMAGES_DIR, "val")      # /opt/render/project/src/Images/val
+BASE_DIR       = os.getcwd()
+IMAGES_DIR     = os.path.join(BASE_DIR, "Images")
+TRAIN_DIR      = os.path.join(IMAGES_DIR, "train")
+VAL_DIR        = os.path.join(IMAGES_DIR, "val")
 DATA_YAML_PATH = os.path.join(BASE_DIR, "data.yaml")
-MODEL_PATH     = os.path.join(BASE_DIR,
-                    "runs/detect/door_window_yolov8/weights/best.pt")
+MODEL_PATH     = os.path.join(BASE_DIR, "runs/detect/door_window_yolov8/weights/best.pt")
 
-# === ENSURE DATASET FOLDERS & YAML ===
-# (so we don’t get “missing path '/…/Images/val'”)
+# === ENSURE FOLDERS EXIST ===
 os.makedirs(TRAIN_DIR, exist_ok=True)
-os.makedirs(VAL_DIR,   exist_ok=True)
+os.makedirs(VAL_DIR, exist_ok=True)
 
+# === WRITE data.yaml ===
 yaml_content = f"""
 train: {TRAIN_DIR}
-val:   {VAL_DIR}
+val: {VAL_DIR}
 
 nc: 2
 names: ['door', 'window']
@@ -29,10 +28,9 @@ names: ['door', 'window']
 with open(DATA_YAML_PATH, "w") as f:
     f.write(yaml_content)
 
-# === TRAINING ===
-# Load YOLOv8n (pretrained) and train on data.yaml
-print("🛠️  Starting training (if no errors)…")
-model = YOLO("yolov8n.pt")    # load pretrained YOLOv8n
+# === TRAIN YOLOv8 MODEL ===
+print("🛠️  Starting training...")
+model = YOLO("yolov8n.pt")
 model.train(
     data=DATA_YAML_PATH,
     epochs=100,
@@ -43,14 +41,15 @@ model.train(
 )
 print("✅ Training complete.")
 
-# === FLASK APP FOR INFERENCE ===
-app = Flask(__name__)
-
+# === LOAD TRAINED MODEL FOR INFERENCE ===
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Trained model not found at {MODEL_PATH}")
 
 model = YOLO(MODEL_PATH)
 print("📦 Loaded model with classes:", model.names)
+
+# === FLASK APP ===
+app = Flask(__name__)
 
 @app.route("/detect", methods=["POST"])
 def detect():
@@ -74,9 +73,9 @@ def detect():
             label = model.names[cls_id]
 
             detections.append({
-                "label":      label,
+                "label": label,
                 "confidence": round(conf, 2),
-                "bbox":       [int(x1), int(y1), int(x2 - x1), int(y2 - y1)]
+                "bbox": [int(x1), int(y1), int(x2 - x1), int(y2 - y1)]
             })
 
     return jsonify({"detections": detections})
