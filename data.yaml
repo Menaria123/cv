@@ -1,5 +1,5 @@
-train: /opt/render/project/datasets/train
-val: /opt/render/project/datasets/val
+train: src/images/train
+val: src/images/val
 
 nc: 2
 names: ['door', 'window']
