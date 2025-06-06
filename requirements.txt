@@ -1,11 +1,14 @@
+# Upgrade pip first (this must be done manually before installing requirements)
+# Run separately: python -m pip install --upgrade pip
+
 # Core ML libraries
-torch==2.3.1+cpu
+torch==2.3.1+cpu      # CPU-only version of PyTorch (Make sure you use correct index URL when installing)
 numpy==1.26.4
---upgrade pip
-# Ultralytics YOLOv8 (latest compatible)
+
+# YOLOv8 by Ultralytics
 ultralytics==8.3.150
 
-# Image and data processing (used internally by YOLOv8)
+# Image and data processing
 opencv-python>=4.8.0
 Pillow>=10.0.0
 matplotlib>=3.7.0
