@@ -1,11 +1,10 @@
-yaml_content = """
-train: Images/train
-val: Images/val
-nc: 2
-names: ['door', 'window']
-"""
+import os
 
-with open('data.yaml', 'w') as f:
-    f.write(yaml_content.strip())
+# Get current working directory
+cwd = os.getcwd()
 
-print("data.yaml file has been created/updated successfully.")
+# Join to get the full path to the Images folder
+images_path = os.path.join(cwd, "Images")
+
+# Print the full path
+print("Absolute path to 'Images' folder:", images_path)
