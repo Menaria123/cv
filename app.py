@@ -3,16 +3,17 @@ from ultralytics import YOLO
 from PIL import Image
 import io
 import os
-import argparse
 
-app = Flask(__name__)
+# === CONFIGURATION ===
 MODEL_PATH = "runs/detect/door_window_yolov8/weights/best.pt"
+DATA_YAML = "data.yaml"
 
+# === TRAINING FUNCTION ===
 def train_model():
     print("🛠️ Starting training...")
     model = YOLO('yolov8n.pt')  # Load pretrained YOLOv8n
     model.train(
-        data='data.yaml',
+        data=DATA_YAML,
         epochs=100,
         imgsz=640,
         batch=16,
@@ -21,11 +22,16 @@ def train_model():
     )
     print("✅ Training complete.")
 
-def load_model():
-    if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError(f"Trained model not found at: {MODEL_PATH}")
-    print("📦 Loading trained model...")
-    return YOLO(MODEL_PATH)
+# === CHECK FOR EXISTING MODEL OR TRAIN ===
+if not os.path.exists(MODEL_PATH):
+    train_model()
+
+# === LOAD TRAINED MODEL ===
+model = YOLO(MODEL_PATH)
+print("Loaded model with classes:", model.names)
+
+# === FLASK APP ===
+app = Flask(__name__)
 
 @app.route('/detect', methods=['POST'])
 def detect():
@@ -38,7 +44,7 @@ def detect():
     except Exception as e:
         return jsonify({"error": f"Invalid image file: {str(e)}"}), 400
 
-    results = app.model.predict(image, conf=0.05, imgsz=640)
+    results = model.predict(image, conf=0.05, imgsz=640)
 
     detections = []
     for result in results:
@@ -46,7 +52,7 @@ def detect():
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             conf = box.conf[0].item()
             cls_id = int(box.cls[0].item())
-            label = app.model.names[cls_id]
+            label = model.names[cls_id]
 
             detections.append({
                 "label": label,
@@ -56,18 +62,6 @@ def detect():
 
     return jsonify({"detections": detections})
 
-def start_server():
-    app.model = load_model()
-    port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Starting server on port {port}")
-    app.run(host="0.0.0.0", port=port)
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="YOLOv8 Trainer and Inference API")
-    parser.add_argument('--train', action='store_true', help="Train the YOLOv8 model")
-    args = parser.parse_args()
-
-    if args.train:
-        train_model()
-    else:
-        start_server()
+    port = int(os.environ.get("PORT", 5000))  # Use PORT env var if set
+    app.run(host='0.0.0.0', port=port, debug=True)
