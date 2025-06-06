@@ -3,6 +3,7 @@ import ultralytics.nn.modules
 import ultralytics.nn.tasks
 from ultralytics import YOLO
 import os 
+print("CWD:", os.getcwd())
 
 model = YOLO('yolov8n.pt')
 
