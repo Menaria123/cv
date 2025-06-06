@@ -1,5 +1,5 @@
-train: ./Images/train
-val: ./Images/val
+train: Images/train
+val: Images/val
 
 nc: 2
 names: ['door', 'window']
