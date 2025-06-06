@@ -68,3 +68,6 @@ This project demonstrates how to train a custom YOLOv8 model to detect doors and
    ```bash 
     python train.py
     python app.py
+5. **Curl for test**
+   ```bash
+   curl -X POST http://localhost:5000/detect -F "image=@cv\house-map-designing-services.jpg"
